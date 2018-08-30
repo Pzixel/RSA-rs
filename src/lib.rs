@@ -73,7 +73,7 @@ fn rsa_mod_exp(b: i64, e: i64, m: i64) -> Result<i64, &'static str> {
 }
 
 fn rsa_gen_keys() -> (PublicKeyClass, PrivateKeyClass) {
-    const E: i64 = 1 << 8 + 1;
+    const E: i64 = (1 << 8) + 1;
     let (n, phi) = (|| {
         let mut rng = thread_rng();
         loop {
