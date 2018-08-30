@@ -1,3 +1,4 @@
+#![allow(many_single_char_names)]
 #[macro_use]
 extern crate lazy_static;
 extern crate rand;
@@ -11,12 +12,12 @@ lazy_static! {
     };
 }
 
-struct PublicKeyClass {
+pub struct PublicKeyClass {
     modulus: i64,
     exponent: i64,
 }
 
-struct PrivateKeyClass {
+pub struct PrivateKeyClass {
     modulus: i64,
     exponent: i64,
 }
@@ -36,15 +37,11 @@ fn gcd(a: i64, b: i64) -> i64 {
 fn ext_euclid(a: i64, b: i64) -> i64 {
     let mut a = a;
     let (mut x, mut y, mut u, mut v, mut gcd) = (0, 1, 1, 0, b);
-    let mut m;
-    let mut n;
-    let mut q;
-    let mut r;
     while a != 0 {
-        q = gcd / a;
-        r = gcd % a;
-        m = x - u * q;
-        n = y - v * q;
+        let q = gcd / a;
+        let r = gcd % a;
+        let m = x - u * q;
+        let n = y - v * q;
         gcd = a;
         a = r;
         x = u;
@@ -72,9 +69,9 @@ fn rsa_mod_exp(b: i64, e: i64, m: i64) -> Result<i64, &'static str> {
     Ok(num)
 }
 
-fn rsa_gen_keys() -> (PublicKeyClass, PrivateKeyClass) {
+pub fn rsa_gen_keys() -> (PublicKeyClass, PrivateKeyClass) {
     const E: i64 = (1 << 8) + 1;
-    let (n, phi) = (|| {
+    let (n, phi) = {
         let mut rng = thread_rng();
         loop {
             let p = *rng.choose(&PRIMES).unwrap();
@@ -82,10 +79,10 @@ fn rsa_gen_keys() -> (PublicKeyClass, PrivateKeyClass) {
             let n = p * q;
             let phi = (p - 1) * (q - 1);
             if p != 0 && q != 0 && p != q && gcd(phi, E) == 1 {
-                return (n, phi);
+                break (n, phi);
             }
         }
-    })();
+    };
     let mut d = ext_euclid(phi, E);
     while d < 0 {
         d += phi;
@@ -103,14 +100,14 @@ fn rsa_gen_keys() -> (PublicKeyClass, PrivateKeyClass) {
     (public, private)
 }
 
-fn rsa_encrypt(message: &[u8], public: &PublicKeyClass) -> Vec<i64> {
+pub fn rsa_encrypt(message: &[u8], public: &PublicKeyClass) -> Vec<i64> {
     message
         .iter()
-        .map(|x| rsa_mod_exp(*x as i64, public.exponent, public.modulus).unwrap())
+        .map(|x| rsa_mod_exp((*x).into(), public.exponent, public.modulus).unwrap())
         .collect()
 }
 
-fn rsa_decrypt(message: &[i64], private: &PrivateKeyClass) -> Vec<u8> {
+pub fn rsa_decrypt(message: &[i64], private: &PrivateKeyClass) -> Vec<u8> {
     message
         .iter()
         .map(|x| rsa_mod_exp(*x as i64, private.exponent, private.modulus).unwrap() as u8)
